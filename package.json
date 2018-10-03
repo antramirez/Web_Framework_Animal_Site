@@ -1,0 +1,29 @@
+{
+  "name": "antramirez-homework03",
+  "version": "1.0.0",
+  "description": "reusable web framework",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha test/webby-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nyu-csci-ua-0480-001-003-fall-2018/antramirez-homework03.git"
+  },
+  "author": "Anthony Ramirez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nyu-csci-ua-0480-001-003-fall-2018/antramirez-homework03/issues"
+  },
+  "homepage": "https://github.com/nyu-csci-ua-0480-001-003-fall-2018/antramirez-homework03#readme",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-match": "^1.1.1",
+    "mocha": "^5.2.0",
+    "mocha-sinon": "^2.1.0",
+    "sinon": "^6.3.4"
+  }
+}
