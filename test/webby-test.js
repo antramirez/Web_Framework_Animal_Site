@@ -1,5 +1,5 @@
 const chai = require('chai');
-const expect = chai.expect; 
+const expect = chai.expect;
 const net = require('net');
 const fs = require('fs');
 require('mocha-sinon');
@@ -18,15 +18,15 @@ const route = {f: (req, res) => [req, res] };
 function mockSocket() {
 
     socket = new net.Socket({});
-    this.sinon.stub(socket, 'write').callsFake(function(s) { 
+    this.sinon.stub(socket, 'write').callsFake(function(s) {
         return s;
     });
 
-    this.sinon.stub(socket, 'end').callsFake(function() { 
+    this.sinon.stub(socket, 'end').callsFake(function() {
         return null;
     });
 
-    this.sinon.stub(socket, 'on').callsFake(function(event, f) { 
+    this.sinon.stub(socket, 'on').callsFake(function(event, f) {
         return [event, f];
     });
 }
@@ -45,7 +45,7 @@ function mockRoute() {
 
 function mockReadFile() {
 
-    this.sinon.stub(fs, 'readFile').callsFake(function(fn, cb) { 
+    this.sinon.stub(fs, 'readFile').callsFake(function(fn, cb) {
         return [fn, cb];
     });
 }
