@@ -202,11 +202,13 @@ class Response {
   }
 
   send(body) {
-    // set content-type to html, even if header doesn't exist
-    this.set('Content-Type', 'text/html');
-    // TODO check if text/html is in headers
-    // write headers and extra line break
+    // write status
     this.sock.write(this.statusLineToString());
+    // check if header has been set or else set Content-Type to text/html
+    if (this.headersToString() === {}) {
+      this.set('Content-Type', 'text/html');
+    }
+    // write headers and add carriage return and new line
     this.sock.write(this.headersToString());
     this.sock.write('\r\n');
     // write body and end connection
