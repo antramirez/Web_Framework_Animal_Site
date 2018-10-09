@@ -1,0 +1,35 @@
+body {
+  background-color: rgba(0,0,255,.15);
+  font-family: sans-serif;
+  text-align: center;
+}
+
+h1 {
+  font-size: 72px;
+  color:rgb(120,120,120);
+  margin-top: 50px;
+}
+
+a {
+  text-decoration: none;
+  color:rgb(45,50,55);
+  padding: 20px;
+  border: 1px dashed red;
+  -webkit-transition: color, border .5s;
+  transition: color, border .5;
+}
+
+a:hover {
+  color: white;
+  border: 1px solid white;
+}
+
+div {
+  max-width: 800;
+  margin:auto;
+}
+img {
+  border: 1px solid white;
+  margin: 25px;
+  width: 300px;
+}
