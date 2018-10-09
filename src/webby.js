@@ -1,6 +1,7 @@
 // webby.js
 const path = require('path');
 const net = require('net');
+const fs = require('fs');
 
 const HTTP_STATUS_CODES = {
   200: 'OK',
@@ -127,7 +128,7 @@ class App {
     // if middleware is set, use it with the new request and
     // response objects and use processRoutes as the next function
     if (this.middleware !== null) {
-      this.middleware(newRequest, newResponse, this.processRoutes(newRequest, newResponse));
+      this.middleware(newRequest, newResponse, this.processRoutes.bind(this, newRequest, newResponse));
     }
     else {
       // if middleware is not set, just call processRoutes
@@ -220,8 +221,24 @@ class Response {
   }
 }
 
-function serveStatic() {
-  // TODO
+function serveStatic(basePath) {
+  // return middleware
+  return (req, res, next) => {
+    // concatenate base path with the path of the request object
+    const fullPath = path.join(basePath, req.path);
+    // read file and check for error
+    fs.readFile(fullPath, (err,data) => {
+      if (!err) {
+        // if no error, set content type based on mime type of path and send data to response object
+        res.set('Content-Type', getMIMEType(fullPath));
+        res.send(data);
+      }
+      else {
+        // invoke callback function if error
+        next();
+      }
+    });
+  };
 }
 
 module.exports = {
@@ -231,5 +248,6 @@ module.exports = {
   getMIMEType: getMIMEType,
   Request: Request,
   App: App,
-  Response: Response
+  Response: Response,
+  static: serveStatic
 };
