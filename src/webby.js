@@ -5,9 +5,10 @@ const fs = require('fs');
 
 const HTTP_STATUS_CODES = {
   200: 'OK',
+  301: 'Redirect',
   404: 'Not Found',
   500: 'Internal Server Error'
-}
+};
 
 const MIME_TYPES = {
   'jpg': 'image/jpeg',
@@ -16,7 +17,7 @@ const MIME_TYPES = {
   'html': 'text/html',
   'css': 'text/css',
   'txt': 'text/plain'
-}
+};
 
 function getExtension(fileName) {
   // use path module to get extension and return string after the '.'
@@ -36,9 +37,82 @@ function getMIMEType(fileName) {
 class Request {
   // set constructor (taken from class 7 notes)
   constructor(httpRequest) {
-    const [method, path, ...notUsed] = httpRequest.split(' ');
+    const [method, path] = httpRequest.split(' ');
     this.method = method;
     this.path = path;
+  }
+}
+
+class Response {
+
+  constructor(socket, statusCode, version) {
+    // set properties
+    this.sock = socket;
+    // check if statusCode and version are set, and if they're not, use default values
+    if (statusCode !== undefined) {
+      this.statusCode = statusCode;
+    }
+    else {
+      this.statusCode = 200;
+    }
+    if (version !== undefined) {
+      this.version = version;
+    }
+    else {
+      this.version = 'HTTP/1.1';
+    }
+
+    this.headers = {};
+    this.body = '';
+  }
+
+  set(name, value) {
+    // add header and header values
+    this.headers[name] = value;
+  }
+
+  end() {
+    // call end on socket
+    this.sock.end();
+  }
+
+  statusLineToString() {
+    // return HTTP version, status code, and status code message
+    return this.version + ' ' + this.statusCode + ' ' + HTTP_STATUS_CODES[this.statusCode] + '\r\n';
+  }
+
+  headersToString() {
+    let s = '';
+    // add headers and values follwed by line and feed return to string
+    for (const h in this.headers) {
+      s += h;
+      s += ': ' + this.headers[h];
+      s += '\r\n';
+    }
+
+    // return string
+    return s;
+  }
+
+  send(body) {
+    // write status
+    this.sock.write(this.statusLineToString());
+    // check if header has been set or else set Content-Type to text/html
+    if (this.headersToString() === {}) {
+      this.set('Content-Type', 'text/html');
+    }
+    // write headers and add carriage return and new line
+    this.sock.write(this.headersToString());
+    this.sock.write('\r\n');
+    // write body and end connection
+    this.sock.write(body);
+    this.sock.end();
+  }
+
+  status(statusCode) {
+    // set status code and return Response object
+    this.statusCode = statusCode;
+    return this;
   }
 }
 
@@ -59,7 +133,6 @@ class App {
     // counter
     let i = 1;
     let pathToCheck = '';
-    let stop = false;
     // iterate through string until ?, #, or = is encountered
     while (path.charAt(i) !== '?' && path.charAt(i) !== '#' && path.charAt(i) !== '=' && i < path.length) {
       // add to string until '/'
@@ -123,16 +196,17 @@ class App {
 
   handleRequest(sock, binaryData) {
     // create new request and response objects, using binaryData string and sock, respectively
-    let newRequest = new Request('' + binaryData);
-    let newResponse = new Response(sock, 200, 'HTTP/1.1');
+    const newRequest = new Request('' + binaryData);
+    const newResponse = new Response(sock, 200, 'HTTP/1.1');
     // if middleware is set, use it with the new request and
     // response objects and use processRoutes as the next function
     if (this.middleware !== null) {
+      // bind app class to processRoutes with appropriate parameters
       this.middleware(newRequest, newResponse, this.processRoutes.bind(this, newRequest, newResponse));
     }
     else {
       // if middleware is not set, just call processRoutes
-      this.processRoutes(newRequest, newResponse)
+      this.processRoutes(newRequest, newResponse);
     }
   }
 
@@ -150,90 +224,17 @@ class App {
   }
 }
 
-class Response {
-
-  constructor(socket, statusCode, version) {
-    // set properties
-    this.sock = socket;
-    // check if statusCode and version are set, and if they're not, use default values
-    if (statusCode !==  undefined) {
-      this.statusCode = statusCode;
-    }
-    else {
-      this.statusCode = 200;
-    }
-    if (version !== undefined) {
-      this.version = version;
-    }
-    else {
-      this.version = 'HTTP/1.1';
-    }
-
-    this.headers = {};
-    this.body = '';
-  }
-
-  set(name, value) {
-    // add header and header values
-    this.headers[name] = value;
-  }
-
-  end() {
-    // call end on socket
-    this.sock.end();
-  }
-
-  statusLineToString() {
-    // return HTTP version, status code, and status code message
-    return this.version + ' ' + this.statusCode + ' ' + HTTP_STATUS_CODES[this.statusCode] + '\r\n';
-  }
-
-  headersToString() {
-    let s = ''
-    // add headers and values follwed by line and feed return to string
-    for (const h in this.headers) {
-      s += h;
-      s += ': ' + this.headers[h];
-      s += '\r\n';
-    }
-
-    // return string
-    return s;
-  }
-
-  send(body) {
-    // write status
-    this.sock.write(this.statusLineToString());
-    // check if header has been set or else set Content-Type to text/html
-    if (this.headersToString() === {}) {
-      this.set('Content-Type', 'text/html');
-    }
-    // write headers and add carriage return and new line
-    this.sock.write(this.headersToString());
-    this.sock.write('\r\n');
-    // write body and end connection
-    this.sock.write(body);
-    this.sock.end();
-  }
-
-  status(statusCode) {
-    // set status code and return Response object
-    this.statusCode = statusCode;
-    return this;
-  }
-}
-
 function serveStatic(basePath) {
   // return middleware
   return (req, res, next) => {
     // concatenate base path with the path of the request object
     const fullPath = path.join(basePath, req.path);
     // read file and check for error
-    fs.readFile(fullPath, (err,data) => {
+    fs.readFile(fullPath, (err, data) => {
       if (!err) {
         // if no error, set content type based on mime type of path and send data to response object
         res.set('Content-Type', getMIMEType(fullPath));
-        res.send(data);
+        res.status(200).send(data);
       }
       else {
         // invoke callback function if error
@@ -243,6 +244,7 @@ function serveStatic(basePath) {
   };
 }
 
+// export modules
 module.exports = {
   HTTP_STATUS_CODES: HTTP_STATUS_CODES,
   MIME_TYPES: MIME_TYPES,
