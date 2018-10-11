@@ -6,6 +6,7 @@ const path = require('path');
 const app = new webby.App();
 
 // add middleware
+/* code from https://cs.nyu.edu/courses/fall18/CSCI-UA.0480-003/_site/homework/03.html */
 app.use(webby.static(path.join(__dirname, '..', 'public')));
 
 // css page

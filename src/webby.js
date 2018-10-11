@@ -119,6 +119,7 @@ class Response {
 class App {
   // set constructor with default properties
   constructor() {
+    /* server code from https://cs.nyu.edu/courses/fall18/CSCI-UA.0480-003/_site/homework/03.html */
     this.server = net.createServer(sock => this.handleConnection(sock));
     this.routes = {};
     this.middleware = null;
